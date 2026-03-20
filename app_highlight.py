@@ -101,10 +101,38 @@ def display_context(context):
     color = COLORS[(idx - 1) % len(COLORS)]
     short_source = source.split('/')[-1] if '/' in source else source
     
-    # 수식 블록($$) 및 일반 텍스트 뭉개짐 방지를 위한 마크다운 안전 거리 확보
-    safe_content = content.replace('$$', '\n\n$$\n\n')
-    safe_content = re.sub(r'\n{3,}', '\n\n', safe_content)
-    safe_content = re.sub(r'(?<!\n)\n(?!\n)', '  \n', safe_content)
+    # 1. 문서 출처나 내용으로 보아 아예 전체가 소스코드 파일인 경우, 전체를 코드 블록으로 씌웁니다.
+    is_code_file = any(source.endswith(ext) for ext in [".f90", ".f", ".py", ".c", ".cpp", ".sh", ".json"]) or "Code Entity:" in content
+    
+    if is_code_file and "```" not in content:
+        lang = "fortran" if source.endswith((".f90", ".f")) else "python" if source.endswith(".py") else ""
+        safe_content = f"```{lang}\n{content}\n```"
+    else:
+        # 2. 텍스트 문서인 경우, 수식 블록($$)과 이미 존재하는 코드블록(```)이 망가지는 것을 스마트하게 방지
+        temp_content = content.replace('$$', '\n\n$$\n\n')
+        temp_content = re.sub(r'\n{3,}', '\n\n', temp_content)
+        
+        lines = temp_content.split('\n')
+        processed_lines = []
+        in_code_block = False
+        
+        for line in lines:
+            if line.strip().startswith("```"):
+                in_code_block = not in_code_block
+                processed_lines.append(line)
+                continue
+                
+            if in_code_block:
+                # 코드 블록 내부 코드는 공백/띄어쓰기 등 원본 형태를 절대 건드리지 않고 그대로 보존합니다.
+                processed_lines.append(line)
+            else:
+                if line.strip() != "":
+                    # 일반 텍스트 줄은 마크다운 연속성을 돕기 위해 끝에 스페이스 2개 삽입 (강제 줄바꿈)
+                    processed_lines.append(line.rstrip() + "  ")
+                else:
+                    processed_lines.append("")
+        
+        safe_content = "\n".join(processed_lines)
 
     # st.expander 대신 HTML <details>를 사용하여 토글 제목에 색상 배지를 직관적으로 복원합니다.
     # 마크다운 파서가 들여쓰기된 HTML 태그를 '코드 블록' 텍스트로 오인하는 것을 방지하기 위해 들여쓰기를 제거합니다.
