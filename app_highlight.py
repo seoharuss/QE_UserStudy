@@ -6,7 +6,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
 # === Google Sheets 연동 설정 ===
-def append_to_gsheet(question, answer, score):
+def save_score_to_gsheet(scenario_idx, score):
     try:
         # .streamlit/secrets.toml 에 설정된 값을 가져옵니다.
         # [gcp_service_account] 로 시작하는 서비스 계정 정보와
@@ -23,9 +23,19 @@ def append_to_gsheet(question, answer, score):
         
         sheet = client.open_by_url(spreadsheet_url).sheet1
         
-        # 질문, 답변, 점수를 새 행으로 추가합니다.
-        row = [str(question), str(answer), str(score)]
-        sheet.append_row(row)
+        col = scenario_idx + 1
+        header_text = f"scenario {scenario_idx + 1}"
+        
+        # 1행: 시나리오명(헤더) 작성
+        sheet.update_cell(1, col, header_text)
+        
+        # 해당 열에서 데이터를 조회 후 비어있는 가장 마지막 줄에 점수를 기록해 누적 가능하게 함
+        col_values = sheet.col_values(col)
+        next_row = len(col_values) + 1
+        if next_row < 2:
+            next_row = 2
+            
+        sheet.update_cell(next_row, col, str(score))
         return True
     except KeyError as k:
         st.error(f"⚠️ `.streamlit/secrets.toml` 설정이 누락되었습니다: {k}")
@@ -131,21 +141,53 @@ def main():
     
     # Session State 초기화
     if "current_idx" not in st.session_state:
-        st.session_state.current_idx = 0
+        st.session_state.current_idx = -1
         
+    # === 1. 인트로 페이지 ===
+    if st.session_state.current_idx == -1:
+        st.markdown("## 📖 RAG 답변 평가 실험 가이드")
+        st.info("안녕하세요! 이 실험은 Quantum Espresso(QE)에 대한 RAG 기반 챗봇의 답변 품질을 평가하는 과정입니다.\n\n"
+                "각 **시나리오**마다 제공된 문제(Question)와 참고 문서(Context)를 바탕으로, 챗봇의 답변(Answer)이 얼마나 정확하고 충실한지 0점~5점 사이로 평가해 주시면 됩니다.\n\n"
+                "모든 평가 점수는 Google Sheet에 실시간으로 기록됩니다.")
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        cols = st.columns([1, 2, 1])
+        with cols[1]:
+            if st.button("🚀 평가 시작하기", use_container_width=True):
+                st.session_state.current_idx = 0
+                st.rerun()
+        return
+
+    # === 3. 완료 페이지 ===
+    if st.session_state.current_idx >= total_items:
+        st.balloons()
+        st.markdown("<h2 style='text-align: center;'>🎉 평가가 모두 완료되었습니다!</h2>", unsafe_allow_html=True)
+        st.success("소중한 시간을 내어 모든 시나리오에 대한 평가를 마쳐주셔서 감사합니다.")
+        st.info("이제 진행하시던 브라우저 창을 닫으셔도 됩니다.")
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        cols = st.columns([1, 2, 1])
+        with cols[1]:
+            if st.button("⏮️ 처음으로 돌아가기 (다시 하기)", use_container_width=True):
+                st.session_state.current_idx = -1
+                st.rerun()
+        return
+
+    # === 2. 평가 진행 페이지 ===
     # 상단 네비게이션 버튼 (이전 / 다음)
     col_nav1, col_nav2, col_nav3 = st.columns([1, 8, 1])
     
     with col_nav1:
-        if st.button("⬅️ Prev", disabled=(st.session_state.current_idx == 0)):
+        if st.button("⬅️ 이전", disabled=(st.session_state.current_idx == 0)):
             st.session_state.current_idx -= 1
             st.rerun()
             
     with col_nav2:
-        st.markdown(f"<h4 style='text-align: center; margin-top: 5px; color: #555;'>데이터 {st.session_state.current_idx + 1} / {total_items}</h4>", unsafe_allow_html=True)
+        st.markdown(f"<h4 style='text-align: center; margin-top: 5px; color: #555;'>시나리오 {st.session_state.current_idx + 1} / {total_items}</h4>", unsafe_allow_html=True)
         
     with col_nav3:
-        if st.button("Next ➡️", disabled=(st.session_state.current_idx == total_items - 1)):
+        btn_label = "완료 🏁" if st.session_state.current_idx == total_items - 1 else "다음 ➡️"
+        if st.button(btn_label):
             st.session_state.current_idx += 1
             st.rerun()
 
@@ -204,16 +246,21 @@ def main():
     with col_score2:
         st.write("") # 스타일링용 여백
         if st.button("💾 점수 저장", use_container_width=True):
-            # Google Sheet 연동
-            question_text = item.get("question", "")
-            raw_answer = item.get("rag_answer", "")
+            # Google Sheet 연동 (단독 기록)
+            scenario_idx = st.session_state.current_idx
             
-            success = append_to_gsheet(question_text, raw_answer, selected_score)
+            success = save_score_to_gsheet(scenario_idx, selected_score)
             
             if success:
-                st.success("점수가 Google Sheet에 성공적으로 저장되었습니다! 🚀")
+                st.success(f"scenario {scenario_idx + 1} 점수 저장 성공! 🚀")
             else:
-                st.error("Google Sheet 연결 및 저장에 실패했습니다.")
+                st.error("Google Sheet 연결 및 저장 실패.")
+                
+        # 하단 다음 이동 버튼
+        next_btn_label = "🏁 모든 평가 완료" if st.session_state.current_idx == total_items - 1 else "➡️ 다음 시나리오로"
+        if st.button(next_btn_label, use_container_width=True):
+            st.session_state.current_idx += 1
+            st.rerun()
 
     st.write("---")
     
