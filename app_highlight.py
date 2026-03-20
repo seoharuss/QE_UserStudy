@@ -74,7 +74,7 @@ def main():
     st.markdown("LLM이 답변을 생성할 때 참고한 **문서(Context)와 답변의 출처([Index])를 같은 색상으로 매칭**하여 시각화합니다.")
     
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    data_folder = os.path.join(current_dir, "data", "highlight_data")
+    data_folder = os.path.join(current_dir, "data")
     
     if not os.path.exists(data_folder):
         st.error(f"데이터 폴더를 찾을 수 없습니다: `{data_folder}`\n먼저 `make_rag_data.py`를 실행하여 데이터를 생성해주세요.")
