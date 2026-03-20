@@ -110,8 +110,11 @@ def display_context(context):
         </div>
         """
         st.markdown(badge_html, unsafe_allow_html=True)
-        # 본문은 Streamlit의 네이티브 마크다운을 사용하여 Answer 텍스트와 완벽히 동일한 포맷으로 출력
-        st.markdown(content)
+        
+        # 단일 줄바꿈(\n)이 무시되어 형태가 뭉개지며 수식이 깨지는 현상을 방지하기 위해 마크다운 줄바꿈('  \n') 처리
+        safe_content = content.replace('\n', '  \n')
+        # 본문은 Answer 텍스트와 완벽히 동일한 폰트 및 줄간격으로 출력합니다.
+        st.markdown(f'<div style="font-size: 1.05em; line-height: 1.6;">\n\n{safe_content}\n\n</div>', unsafe_allow_html=True)
 
 def main():
     st.title("Context user study")
