@@ -2,6 +2,40 @@ import streamlit as st
 import os
 import json
 import re
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+
+# === Google Sheets 연동 설정 ===
+def append_to_gsheet(question, answer, score):
+    try:
+        # .streamlit/secrets.toml 에 설정된 값을 가져옵니다.
+        # [gcp_service_account] 로 시작하는 서비스 계정 정보와
+        # [gsheets] 탭의 spreadsheet_url을 불러옵니다.
+        credentials_dict = dict(st.secrets["gcp_service_account"])
+        spreadsheet_url = st.secrets["gsheets"]["spreadsheet_url"]
+
+        scope = [
+            "https://spreadsheets.google.com/feeds",
+            "https://www.googleapis.com/auth/drive"
+        ]
+        creds = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
+        client = gspread.authorize(creds)
+        
+        sheet = client.open_by_url(spreadsheet_url).sheet1
+        
+        # 질문, 답변, 점수를 새 행으로 추가합니다.
+        row = [str(question), str(answer), str(score)]
+        sheet.append_row(row)
+        return True
+    except KeyError as k:
+        st.error(f"⚠️ `.streamlit/secrets.toml` 설정이 누락되었습니다: {k}")
+        return False
+    except FileNotFoundError:
+        st.error("⚠️ `.streamlit/secrets.toml` 파일을 찾을 수 없습니다.")
+        return False
+    except Exception as e:
+        st.error(f"Google Sheet 연동 오류: {e}")
+        return False
 
 # === 페이지 설정 ===
 st.set_page_config(layout="wide", page_title="Context user study")
@@ -173,7 +207,17 @@ def main():
             data[st.session_state.current_idx]["expert_score"] = selected_score
             with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, ensure_ascii=False, indent=4)
-            st.success("점수가 성공적으로 저장되었습니다!")
+            
+            # Google Sheet 연동
+            question_text = item.get("question", "")
+            raw_answer = item.get("rag_answer", "")
+            
+            success = append_to_gsheet(question_text, raw_answer, selected_score)
+            
+            if success:
+                st.success("점수가 로컬과 Google Sheet에 모두 저장되었습니다!")
+            else:
+                st.warning("로컬에는 저장되었으나, Google Sheet 연결에 실패했습니다.")
 
     st.write("---")
     
