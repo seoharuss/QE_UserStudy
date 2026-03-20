@@ -3,6 +3,7 @@ import os
 import json
 import re
 import gspread
+import markdown
 from oauth2client.service_account import ServiceAccountCredentials
 
 # === Google Sheets 연동 설정 ===
@@ -96,6 +97,9 @@ def display_context(context):
     color = COLORS[(idx - 1) % len(COLORS)]
     short_source = source.split('/')[-1] if '/' in source else source
     
+    # markdown 텍스트를 HTML로 변환합니다. (fenced_code, tables 지원)
+    content_html = markdown.markdown(content, extensions=['fenced_code', 'tables'])
+    
     # HTML <details>와 <summary> 태그를 이용하면 제목 부분에도 예쁜 색상 배지(HTML)를 넣을 수 있습니다.
     html = f"""
     <details style="margin-bottom: 12px; border: 1px solid rgba(128,128,128,0.2); border-radius: 6px; box-shadow: 1px 1px 4px rgba(0,0,0,0.1); overflow: hidden;">
@@ -105,8 +109,8 @@ def display_context(context):
         </summary>
         <div style="border-top: 1px solid rgba(128,128,128,0.1); border-left: 6px solid {color}; padding: 16px; background-color: rgba(128,128,128,0.05);">
             <div style="font-size: 0.95em; color: #888; margin-bottom: 10px;">전체 경로: {source}</div>
-            <div style="font-size: 0.95em; line-height: 1.5; color: #ddd;">
-                {content.replace(chr(10), '<br>')}
+            <div style="font-size: 0.95em; line-height: 1.5; color: #ddd; word-break: break-word;" class="markdown-context">
+                {content_html}
             </div>
         </div>
     </details>
@@ -153,7 +157,7 @@ def main():
         st.markdown("<br>", unsafe_allow_html=True)
         cols = st.columns([1, 2, 1])
         with cols[1]:
-            if st.button("평가 시작하기", use_container_width=True):
+            if st.button("Start !", use_container_width=True):
                 st.session_state.current_idx = 0
                 st.rerun()
         return
