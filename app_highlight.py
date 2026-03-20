@@ -101,25 +101,30 @@ def display_context(context):
     color = COLORS[(idx - 1) % len(COLORS)]
     short_source = source.split('/')[-1] if '/' in source else source
     
-    with st.expander(f"Context {idx} | 📝 {short_source}"):
-        # 내부 상단에 색상 배지를 배치하여 출처를 매칭하기 쉽게 유지
-        badge_html = f"""
-        <div style="margin-bottom: 15px; border-left: 4px solid {color}; padding-left: 10px;">
-            <span style="background-color: {color}; color: #333; padding: 3px 10px; border-radius: 6px; font-weight: bold; margin-right: 8px; box-shadow: 1px 1px 2px rgba(0,0,0,0.2);">Context {idx}</span>
-            <span style="font-size: 0.9em; color: #888;">전체 경로: <code>{source}</code></span>
-        </div>
-        """
-        st.markdown(badge_html, unsafe_allow_html=True)
-        
-        # 수식 블록($$)이 일반 텍스트 문단에 섞여서 파싱이 깨지는 현상을 방지하기 위해 앞뒤로 빈단락(\n\n) 생성
-        safe_content = content.replace('$$', '\n\n$$\n\n')
-        # 3개 이상의 줄바꿈은 2개로 정규화하여 너무 넓은 공백 방지
-        safe_content = re.sub(r'\n{3,}', '\n\n', safe_content)
-        # 일반 텍스트 내의 단일 줄바꿈(\n)은 마크다운 강제 줄바꿈('  \n')으로 치환하되, 이미 분리된 빈 단락(\n\n)은 보존
-        safe_content = re.sub(r'(?<!\n)\n(?!\n)', '  \n', safe_content)
+    # 수식 블록($$) 및 일반 텍스트 뭉개짐 방지를 위한 마크다운 안전 거리 확보
+    safe_content = content.replace('$$', '\n\n$$\n\n')
+    safe_content = re.sub(r'\n{3,}', '\n\n', safe_content)
+    safe_content = re.sub(r'(?<!\n)\n(?!\n)', '  \n', safe_content)
 
-        # 본문은 Answer 텍스트와 완벽히 동일한 폰트 및 줄간격 스타일로 감싸서 출력합니다.
-        st.markdown(f'<div style="font-size: 1.05em; line-height: 1.6;">\n\n{safe_content}\n\n</div>', unsafe_allow_html=True)
+    # st.expander 대신 HTML <details>를 사용하여 토글 제목에 색상 배지를 직관적으로 복원합니다.
+    # HTML 내부의 빈 줄을 통하여 마크다운 파서(Streamlit)가 내부 텍스트를 Answer 텍스트처럼 완벽히 파싱하도록 지원합니다.
+    html_block = f"""
+    <details style="margin-bottom: 12px; border: 1px solid rgba(128,128,128,0.2); border-radius: 6px; box-shadow: 1px 1px 4px rgba(0,0,0,0.1); overflow: hidden;">
+        <summary style="padding: 12px; cursor: pointer; display: flex; align-items: center; background-color: rgba(128,128,128,0.03); outline: none; font-weight: bold;">
+            <span style="background-color: {color}; color: #333; padding: 2px 8px; border-radius: 12px; margin-right: 8px; font-size: 0.9em;">Context {idx}</span>
+            <span style="font-size: 0.95em; color: #666;">📝 {short_source}</span>
+        </summary>
+        <div style="border-top: 1px solid rgba(128,128,128,0.1); border-left: 6px solid {color}; padding: 16px; background-color: rgba(128,128,128,0.05);">
+            <div style="font-size: 0.95em; color: #888; margin-bottom: 10px;">전체 경로: {source}</div>
+            <div style="font-size: 1.05em; line-height: 1.6; color: inherit;">
+
+{safe_content}
+
+            </div>
+        </div>
+    </details>
+    """
+    st.markdown(html_block, unsafe_allow_html=True)
 
 def main():
     st.title("Context user study")
