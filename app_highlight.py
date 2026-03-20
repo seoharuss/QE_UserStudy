@@ -101,6 +101,10 @@ def display_context(context):
     color = COLORS[(idx - 1) % len(COLORS)]
     short_source = source.split('/')[-1] if '/' in source else source
     
+    # input_description.json인 경우 텍스트의 첫 ':' 이전 부분을 토글 제목으로 설정
+    if short_source == "input_description.json" and ":" in content:
+        short_source = content.split(":", 1)[0].strip()
+        
     # 1. 문서 출처나 내용으로 보아 아예 전체가 소스코드 파일인 경우, 전체를 코드 블록으로 씌웁니다.
     is_code_file = any(source.endswith(ext) for ext in [".f90", ".f", ".py", ".c", ".cpp", ".sh"]) or "Code Entity:" in content
     
