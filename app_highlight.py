@@ -204,10 +204,6 @@ def main():
     with col_score2:
         st.write("") # 스타일링용 여백
         if st.button("💾 점수 저장", use_container_width=True):
-            data[st.session_state.current_idx]["expert_score"] = selected_score
-            with open(file_path, "w", encoding="utf-8") as f:
-                json.dump(data, f, ensure_ascii=False, indent=4)
-            
             # Google Sheet 연동
             question_text = item.get("question", "")
             raw_answer = item.get("rag_answer", "")
@@ -215,9 +211,9 @@ def main():
             success = append_to_gsheet(question_text, raw_answer, selected_score)
             
             if success:
-                st.success("점수가 로컬과 Google Sheet에 모두 저장되었습니다!")
+                st.success("점수가 Google Sheet에 성공적으로 저장되었습니다! 🚀")
             else:
-                st.warning("로컬에는 저장되었으나, Google Sheet 연결에 실패했습니다.")
+                st.error("Google Sheet 연결 및 저장에 실패했습니다.")
 
     st.write("---")
     
