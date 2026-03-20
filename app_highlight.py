@@ -153,7 +153,7 @@ def main():
         st.markdown("<br>", unsafe_allow_html=True)
         cols = st.columns([1, 2, 1])
         with cols[1]:
-            if st.button("🚀 평가 시작하기", use_container_width=True):
+            if st.button("평가 시작하기", use_container_width=True):
                 st.session_state.current_idx = 0
                 st.rerun()
         return
