@@ -101,22 +101,17 @@ def display_context(context):
     color = COLORS[(idx - 1) % len(COLORS)]
     short_source = source.split('/')[-1] if '/' in source else source
     
-    # HTML <details>와 <summary> 태그를 이용하면 제목 부분에도 예쁜 색상 배지(HTML)를 넣을 수 있습니다.
-    html = f"""
-    <details style="margin-bottom: 12px; border: 1px solid rgba(128,128,128,0.2); border-radius: 6px; box-shadow: 1px 1px 4px rgba(0,0,0,0.1); overflow: hidden;">
-        <summary style="padding: 12px; cursor: pointer; display: flex; align-items: center; background-color: rgba(128,128,128,0.03); outline: none; font-weight: bold;">
-            <span style="background-color: {color}; color: #333; padding: 2px 8px; border-radius: 12px; margin-right: 8px; font-size: 0.9em; pointer-events: none;">Context {idx}</span>
-            <span style="font-size: 0.95em; color: #666; pointer-events: none;">📝 {short_source}</span>
-        </summary>
-        <div style="border-top: 1px solid rgba(128,128,128,0.1); border-left: 6px solid {color}; padding: 16px; background-color: rgba(128,128,128,0.05);">
-            <div style="font-size: 0.95em; color: #888; margin-bottom: 10px;">전체 경로: {source}</div>
-            <div style="font-size: 0.95em; line-height: 1.5; color: #ddd;">
-                {content.replace(chr(10), '<br>')}
-            </div>
+    with st.expander(f"Context {idx} | 📝 {short_source}"):
+        # 내부 상단에 색상 배지를 배치하여 출처를 매칭하기 쉽게 유지
+        badge_html = f"""
+        <div style="margin-bottom: 15px; border-left: 4px solid {color}; padding-left: 10px;">
+            <span style="background-color: {color}; color: #333; padding: 3px 10px; border-radius: 6px; font-weight: bold; margin-right: 8px; box-shadow: 1px 1px 2px rgba(0,0,0,0.2);">Context {idx}</span>
+            <span style="font-size: 0.9em; color: #888;">전체 경로: <code>{source}</code></span>
         </div>
-    </details>
-    """
-    st.markdown(html, unsafe_allow_html=True)
+        """
+        st.markdown(badge_html, unsafe_allow_html=True)
+        # 본문은 Streamlit의 네이티브 마크다운을 사용하여 Answer 텍스트와 완벽히 동일한 포맷으로 출력
+        st.markdown(content)
 
 def main():
     st.title("Context user study")
