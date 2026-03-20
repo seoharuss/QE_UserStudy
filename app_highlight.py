@@ -107,23 +107,21 @@ def display_context(context):
     safe_content = re.sub(r'(?<!\n)\n(?!\n)', '  \n', safe_content)
 
     # st.expander 대신 HTML <details>를 사용하여 토글 제목에 색상 배지를 직관적으로 복원합니다.
-    # HTML 내부의 빈 줄을 통하여 마크다운 파서(Streamlit)가 내부 텍스트를 Answer 텍스트처럼 완벽히 파싱하도록 지원합니다.
-    html_block = f"""
-    <details style="margin-bottom: 12px; border: 1px solid rgba(128,128,128,0.2); border-radius: 6px; box-shadow: 1px 1px 4px rgba(0,0,0,0.1); overflow: hidden;">
-        <summary style="padding: 12px; cursor: pointer; display: flex; align-items: center; background-color: rgba(128,128,128,0.03); outline: none; font-weight: bold;">
-            <span style="background-color: {color}; color: #333; padding: 2px 8px; border-radius: 12px; margin-right: 8px; font-size: 0.9em;">Context {idx}</span>
-            <span style="font-size: 0.95em; color: #666;">📝 {short_source}</span>
-        </summary>
-        <div style="border-top: 1px solid rgba(128,128,128,0.1); border-left: 6px solid {color}; padding: 16px; background-color: rgba(128,128,128,0.05);">
-            <div style="font-size: 0.95em; color: #888; margin-bottom: 10px;">전체 경로: {source}</div>
-            <div style="font-size: 1.05em; line-height: 1.6; color: inherit;">
+    # 마크다운 파서가 들여쓰기된 HTML 태그를 '코드 블록' 텍스트로 오인하는 것을 방지하기 위해 들여쓰기를 제거합니다.
+    html_block = f"""<details style="margin-bottom: 12px; border: 1px solid rgba(128,128,128,0.2); border-radius: 6px; box-shadow: 1px 1px 4px rgba(0,0,0,0.1); overflow: hidden;">
+<summary style="padding: 12px; cursor: pointer; display: flex; align-items: center; background-color: rgba(128,128,128,0.03); outline: none; font-weight: bold;">
+<span style="background-color: {color}; color: #333; padding: 2px 8px; border-radius: 12px; margin-right: 8px; font-size: 0.9em;">Context {idx}</span>
+<span style="font-size: 0.95em; color: #666;">📝 {short_source}</span>
+</summary>
+<div style="border-top: 1px solid rgba(128,128,128,0.1); border-left: 6px solid {color}; padding: 16px; background-color: rgba(128,128,128,0.05);">
+<div style="font-size: 0.95em; color: #888; margin-bottom: 10px;">전체 경로: {source}</div>
+<div style="font-size: 1.05em; line-height: 1.6; color: inherit;">
 
 {safe_content}
 
-            </div>
-        </div>
-    </details>
-    """
+</div>
+</div>
+</details>"""
     st.markdown(html_block, unsafe_allow_html=True)
 
 def main():
