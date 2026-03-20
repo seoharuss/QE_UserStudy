@@ -4,7 +4,7 @@ import json
 import re
 
 # === 페이지 설정 ===
-st.set_page_config(layout="wide", page_title="RAG Context Highlighter")
+st.set_page_config(layout="wide", page_title="Context user study")
 
 # === 하이라이트 색상 팔레트 ===
 # 컨텍스트 인덱스별로 매칭할 색상
@@ -70,8 +70,8 @@ def display_context(context):
     st.markdown(html, unsafe_allow_html=True)
 
 def main():
-    st.title("🔍 RAG Context Highlighter")
-    st.markdown("LLM이 답변을 생성할 때 참고한 **문서(Context)와 답변의 출처([Index])를 같은 색상으로 매칭**하여 시각화합니다.")
+    st.title("Context user study")
+    st.markdown("LLM이 답변을 생성할 때 참고한 외부 지식 문서(Context)와 답변의 출처([Index])를 같은 색상으로 매칭")
     
     current_dir = os.path.dirname(os.path.abspath(__file__))
     data_folder = os.path.join(current_dir, "data")
@@ -117,6 +117,64 @@ def main():
 
     item = data[st.session_state.current_idx]
     
+    st.write("---")
+    
+    # === 전문가 평가 섹션 ===
+    st.subheader("📝 전문가 평가")
+    with st.expander("판단 기준 및 점수 가이드", expanded=False):
+        st.markdown("""
+**[판단 기준]**
+1. **기술적 정확성 및 무결성**
+   - QE 의 Namelist, 파라미터가 실제로 존재하고 정확하게 사용되었는가?
+2. **근거 기반 충실성**
+   - 제공된 context 범위 내에서만 답변하고 있는가?
+   - context 와 answer 사이에 논리적 괴리가 없는가?
+3. **완결성 및 의도 파악**
+   - 사용자의 질문 중 누락된 부분은 없는가?
+4. **불확실성 처리**
+   - context 에 정보가 없을 때 억지로 추측하지 않았는가?
+
+**[점수 산정 기준]**
+- **0점** : 질문과 무관하거나 답변을 완전히 거부함.
+- **1점** : 환각 (존재하지 않는 파라미터 등) 개념 오류 발생
+- **2점** : 사소한 기술적 부정확함이나 검증되지 않은 주장 포함. 질문에 일부만 답변
+- **3점** : 기술적으로는 맞지만 통찰이 부족하거나, 너무 일반적이고 장황한 답변
+- **4점** : 정확하고 유용함. 기술적 오류는 없으나 스타일이나 문구 표현이 약간 미흡함.
+- **5점** : 결점 없음. 완벽한 기술적 전문성, 근거 기반 답변
+""")
+
+    score_options = [0, 1, 2, 3, 4, 5]
+    def format_score(x):
+        desc = {
+            0: "0점 (질문 무관/거부)",
+            1: "1점 (환각/오류)",
+            2: "2점 (일부 답변/부정확)",
+            3: "3점 (일반적/장황함)",
+            4: "4점 (정확함/스타일 미흡)",
+            5: "5점 (결점 없음/완벽)"
+        }
+        return desc.get(x, f"{x}점")
+        
+    current_score = item.get("expert_score", None)
+    default_index = score_options.index(current_score) if current_score in score_options else 5
+    
+    col_score1, col_score2 = st.columns([8, 2])
+    with col_score1:
+        selected_score = st.radio(
+            "이 답변에 대한 점수를 부여해주세요:",
+            options=score_options,
+            format_func=format_score,
+            index=default_index,
+            horizontal=True
+        )
+    with col_score2:
+        st.write("") # 스타일링용 여백
+        if st.button("💾 점수 저장", use_container_width=True):
+            data[st.session_state.current_idx]["expert_score"] = selected_score
+            with open(file_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=4)
+            st.success("점수가 성공적으로 저장되었습니다!")
+
     st.write("---")
     
     # 질문 섹션
