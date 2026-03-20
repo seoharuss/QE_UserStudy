@@ -111,9 +111,14 @@ def display_context(context):
         """
         st.markdown(badge_html, unsafe_allow_html=True)
         
-        # 단일 줄바꿈(\n)이 무시되어 형태가 뭉개지며 수식이 깨지는 현상을 방지하기 위해 마크다운 줄바꿈('  \n') 처리
-        safe_content = content.replace('\n', '  \n')
-        # 본문은 Answer 텍스트와 완벽히 동일한 폰트 및 줄간격으로 출력합니다.
+        # 수식 블록($$)이 일반 텍스트 문단에 섞여서 파싱이 깨지는 현상을 방지하기 위해 앞뒤로 빈단락(\n\n) 생성
+        safe_content = content.replace('$$', '\n\n$$\n\n')
+        # 3개 이상의 줄바꿈은 2개로 정규화하여 너무 넓은 공백 방지
+        safe_content = re.sub(r'\n{3,}', '\n\n', safe_content)
+        # 일반 텍스트 내의 단일 줄바꿈(\n)은 마크다운 강제 줄바꿈('  \n')으로 치환하되, 이미 분리된 빈 단락(\n\n)은 보존
+        safe_content = re.sub(r'(?<!\n)\n(?!\n)', '  \n', safe_content)
+
+        # 본문은 Answer 텍스트와 완벽히 동일한 폰트 및 줄간격 스타일로 감싸서 출력합니다.
         st.markdown(f'<div style="font-size: 1.05em; line-height: 1.6;">\n\n{safe_content}\n\n</div>', unsafe_allow_html=True)
 
 def main():
