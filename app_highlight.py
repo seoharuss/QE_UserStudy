@@ -5,12 +5,11 @@ import re
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
+from datetime import datetime
+
 # === Google Sheets 연동 설정 ===
-def save_score_to_gsheet(scenario_idx, score):
+def save_all_scores_to_gsheet(scores_dict, total_items):
     try:
-        # .streamlit/secrets.toml 에 설정된 값을 가져옵니다.
-        # [gcp_service_account] 로 시작하는 서비스 계정 정보와
-        # [gsheets] 탭의 spreadsheet_url을 불러옵니다.
         credentials_dict = dict(st.secrets["gcp_service_account"])
         spreadsheet_url = st.secrets["gsheets"]["spreadsheet_url"]
 
@@ -23,19 +22,25 @@ def save_score_to_gsheet(scenario_idx, score):
         
         sheet = client.open_by_url(spreadsheet_url).sheet1
         
-        col = scenario_idx + 1
-        header_text = f"scenario {scenario_idx + 1}"
+        # 헤더 준비: 1행 (time, scenario 1, scenario 2, ...)
+        headers = ["time"] + [f"scenario {i+1}" for i in range(total_items)]
         
-        # 1행: 시나리오명(헤더) 작성
-        sheet.update_cell(1, col, header_text)
-        
-        # 해당 열에서 데이터를 조회 후 비어있는 가장 마지막 줄에 점수를 기록해 누적 가능하게 함
-        col_values = sheet.col_values(col)
-        next_row = len(col_values) + 1
-        if next_row < 2:
-            next_row = 2
+        # 1행이 비어있거나 올바른 구조가 아니면 한 번 덮어씌웁니다.
+        first_row = sheet.row_values(1)
+        if not first_row or first_row[0] != "time":
+            sheet.insert_row(headers, index=1)
             
-        sheet.update_cell(next_row, col, str(score))
+        # 제출할 데이터 로우 구성
+        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        row_data = [now_str]
+        
+        # 각 시나리오별로 저장되어 있는 점수를 가져옵니다. 미평가시 빈 문자열.
+        for i in range(total_items):
+            row_data.append(str(scores_dict.get(i, "")))
+            
+        # 새 행으로 한 번에 추가합니다.
+        sheet.append_row(row_data)
+        
         return True
     except KeyError as k:
         st.error(f"⚠️ `.streamlit/secrets.toml` 설정이 누락되었습니다: {k}")
@@ -142,6 +147,8 @@ def main():
     # Session State 초기화
     if "current_idx" not in st.session_state:
         st.session_state.current_idx = -1
+    if "eval_scores" not in st.session_state:
+        st.session_state.eval_scores = {}
         
     # === 1. 인트로 페이지 ===
     if st.session_state.current_idx == -1:
@@ -231,8 +238,10 @@ def main():
         }
         return desc.get(x, f"{x}점")
         
-    current_score = item.get("expert_score", None)
-    default_index = score_options.index(current_score) if current_score in score_options else 5
+    # 현재 세션에 저장된 점수가 있으면 불러옵니다. 기본값은 5 (결점 없음)
+    current_idx = st.session_state.current_idx
+    saved_score = st.session_state.eval_scores.get(current_idx, 5)
+    default_index = score_options.index(saved_score) if saved_score in score_options else 5
     
     col_score1, col_score2 = st.columns([8, 2])
     with col_score1:
@@ -241,20 +250,24 @@ def main():
             options=score_options,
             format_func=format_score,
             index=default_index,
-            horizontal=True
+            horizontal=True,
+            key=f"radio_score_{current_idx}"
         )
+        # 라디오 버튼을 선택하는 즉시 session_state에 해당 시나리오 번호로 점수 기록
+        st.session_state.eval_scores[current_idx] = selected_score
+
     with col_score2:
         st.write("") # 스타일링용 여백
-        if st.button("💾 점수 저장", use_container_width=True):
-            # Google Sheet 연동 (단독 기록)
-            scenario_idx = st.session_state.current_idx
-            
-            success = save_score_to_gsheet(scenario_idx, selected_score)
-            
-            if success:
-                st.success(f"scenario {scenario_idx + 1} 점수 저장 성공! 🚀")
-            else:
-                st.error("Google Sheet 연결 및 저장 실패.")
+        # 마지막 시나리오에서만 최종 제출 버튼 표시
+        if current_idx == total_items - 1:
+            if st.button("💾 최종 데이터 제출", use_container_width=True):
+                with st.spinner("Google Sheet에 모든 평가 데이터를 전송하는 중..."):
+                    success = save_all_scores_to_gsheet(st.session_state.eval_scores, total_items)
+                if success:
+                    st.success("모든 평가 결과가 성공적으로 제출되었습니다! 🎉")
+                    st.balloons()
+                else:
+                    st.error("Google Sheet 제출 및 연결 실패.")
 
     st.write("---")
     
