@@ -3,7 +3,6 @@ import os
 import json
 import re
 import gspread
-import markdown
 from oauth2client.service_account import ServiceAccountCredentials
 
 # === Google Sheets 연동 설정 ===
@@ -97,9 +96,6 @@ def display_context(context):
     color = COLORS[(idx - 1) % len(COLORS)]
     short_source = source.split('/')[-1] if '/' in source else source
     
-    # markdown 텍스트를 HTML로 변환합니다. (fenced_code, tables 지원)
-    content_html = markdown.markdown(content, extensions=['fenced_code', 'tables'])
-    
     # HTML <details>와 <summary> 태그를 이용하면 제목 부분에도 예쁜 색상 배지(HTML)를 넣을 수 있습니다.
     html = f"""
     <details style="margin-bottom: 12px; border: 1px solid rgba(128,128,128,0.2); border-radius: 6px; box-shadow: 1px 1px 4px rgba(0,0,0,0.1); overflow: hidden;">
@@ -109,8 +105,8 @@ def display_context(context):
         </summary>
         <div style="border-top: 1px solid rgba(128,128,128,0.1); border-left: 6px solid {color}; padding: 16px; background-color: rgba(128,128,128,0.05);">
             <div style="font-size: 0.95em; color: #888; margin-bottom: 10px;">전체 경로: {source}</div>
-            <div style="font-size: 0.95em; line-height: 1.5; color: #ddd; word-break: break-word;" class="markdown-context">
-                {content_html}
+            <div style="font-size: 0.95em; line-height: 1.5; color: #ddd;">
+                {content.replace(chr(10), '<br>')}
             </div>
         </div>
     </details>
@@ -259,12 +255,6 @@ def main():
                 st.success(f"scenario {scenario_idx + 1} 점수 저장 성공! 🚀")
             else:
                 st.error("Google Sheet 연결 및 저장 실패.")
-                
-        # 하단 다음 이동 버튼
-        next_btn_label = "🏁 모든 평가 완료" if st.session_state.current_idx == total_items - 1 else "➡️ 다음 시나리오로"
-        if st.button(next_btn_label, use_container_width=True):
-            st.session_state.current_idx += 1
-            st.rerun()
 
     st.write("---")
     
