@@ -262,6 +262,39 @@ def main():
         - **5점** : 결점 없음. 완벽한 기술적 전문성, 근거 기반 답변
         """)
 
+
+
+    st.write("---")
+    
+    # 질문 섹션
+    st.subheader("Question")
+    st.info(item.get("question", "질문 없음"))
+    
+    st.write("---")
+    
+    # 좌우 컬럼 레이아웃
+    col1, col2 = st.columns([6, 4])
+    
+    with col1:
+        st.subheader("ChatBot Answer")
+        raw_answer = item.get("rag_answer", "")
+        highlighted_answer = highlight_answer(raw_answer)
+        # HTML <div> 내부에 빈 줄(\n\n)을 추가하여 첫 줄의 마크다운(### 등)이 정상 파싱되도록 합니다.
+        st.markdown(f'<div style="font-size: 1.05em; line-height: 1.6;">\n\n{highlighted_answer}\n\n</div>', unsafe_allow_html=True)
+        
+    with col2:
+        st.subheader("Contexts")
+        contexts = item.get("contexts", [])
+        
+        if not contexts:
+            st.warning("참고한 문서가 없습니다.")
+        else:
+            for ctx in contexts:
+                display_context(ctx)
+
+    st.write("---")
+    st.subheader("🎯 점수 부여")
+
     score_options = [0, 1, 2, 3, 4, 5]
     def format_score(x):
         desc = {
@@ -304,34 +337,6 @@ def main():
                     st.balloons()
                 else:
                     st.error("Google Sheet 제출 및 연결 실패.")
-
-    st.write("---")
-    
-    # 질문 섹션
-    st.subheader("Question")
-    st.info(item.get("question", "질문 없음"))
-    
-    st.write("---")
-    
-    # 좌우 컬럼 레이아웃
-    col1, col2 = st.columns([6, 4])
-    
-    with col1:
-        st.subheader("ChatBot Answer")
-        raw_answer = item.get("rag_answer", "")
-        highlighted_answer = highlight_answer(raw_answer)
-        # HTML <div> 내부에 빈 줄(\n\n)을 추가하여 첫 줄의 마크다운(### 등)이 정상 파싱되도록 합니다.
-        st.markdown(f'<div style="font-size: 1.05em; line-height: 1.6;">\n\n{highlighted_answer}\n\n</div>', unsafe_allow_html=True)
-        
-    with col2:
-        st.subheader("Contexts")
-        contexts = item.get("contexts", [])
-        
-        if not contexts:
-            st.warning("참고한 문서가 없습니다.")
-        else:
-            for ctx in contexts:
-                display_context(ctx)
 
 if __name__ == "__main__":
     main()
