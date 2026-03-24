@@ -241,13 +241,19 @@ def main():
         st.warning("저장된 데이터 파일이 없습니다.")
         return
         
-    # 자동으로 가장 최근 파일 선택 (사이드바 선택 없이)
-    selected_file = json_files[0]
-    
-    file_path = os.path.join(data_folder, selected_file)
-    with open(file_path, "r", encoding="utf-8") as f:
-        data = json.load(f)
-        
+    # 모든 JSON 파일을 로드하여 리스트로 합칩니다.
+    all_combined_data = []
+    for f_name in json_files:
+        file_path = os.path.join(data_folder, f_name)
+        with open(file_path, "r", encoding="utf-8") as f:
+            content = json.load(f)
+            # 만약 파일 내용이 리스트라면 extend, 아니라면 단일 객체이므로 append
+            if isinstance(content, list):
+                all_combined_data.extend(content)
+            else:
+                all_combined_data.append(content)
+                
+    data = all_combined_data
     total_items = len(data)
     
     # Session State 초기화
