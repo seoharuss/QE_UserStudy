@@ -307,7 +307,7 @@ def main():
     st.write("---")
     
     # === 전문가 평가 섹션 ===
-    st.warning(EVALUATION_METHOD_INFO)
+    st.write(EVALUATION_METHOD_INFO)
     with st.expander("평가 및 점수 부여 기준", expanded=False):
         st.markdown(EVALUATION_CRITERIA)
 
