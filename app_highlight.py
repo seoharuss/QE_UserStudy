@@ -334,22 +334,20 @@ def main():
         st.subheader("ChatBot Answer")
         raw_answer = item.get("rag_answer", "")
         highlighted_answer = highlight_answer(raw_answer)
-        # 스타일을 외부 CSS로 주입하여 마크다운 파싱 오류를 방지하고 가독성을 높입니다.
+        # 인용구(blockquote) 스타일을 선명하게 조정합니다.
         st.markdown("""
             <style>
-                .chatbot-container p, .chatbot-container li, .chatbot-container div {
-                    font-size: 1.05em !important;
-                    line-height: 1.6 !important;
-                    color: #111 !important; /* 명확한 검은색으로 강제 설정 */
+                blockquote {
+                    color: #111 !important;
+                    border-left-color: #ddd !important;
+                    background-color: rgba(128,128,128,0.05);
+                    padding: 5px 15px;
+                    margin: 10px 0;
                 }
             </style>
         """, unsafe_allow_html=True)
-        
-        # 컨테이너를 사용하여 스타일이 적용될 수 있는 범위를 지정합니다.
-        with st.container():
-             st.markdown(f'<div class="chatbot-container">', unsafe_allow_html=True)
-             st.markdown(highlighted_answer, unsafe_allow_html=True)
-             st.markdown('</div>', unsafe_allow_html=True)
+        # HTML <div> 내부에 빈 줄(\n\n)을 추가하여 첫 줄의 마크다운(### 등)이 정상 파싱되도록 합니다.
+        st.markdown(f'<div style="font-size: 1.05em; line-height: 1.6;">\n\n{highlighted_answer}\n\n</div>', unsafe_allow_html=True)
         
     with col2:
         st.subheader("Contexts")
