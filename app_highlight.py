@@ -342,7 +342,7 @@ def main():
                 display_context(ctx)
 
     st.write("---")
-    st.subheader("🎯 점수 부여")
+    st.subheader("Score")
 
     score_options = [0, 1, 2, 3, 4, 5]
     def format_score(x):
@@ -363,6 +363,16 @@ def main():
     
     col_score1, col_score2 = st.columns([8, 2])
     with col_score1:
+        # 라디오 버튼 사이의 간격을 넓히기 위한 CSS 주입
+        st.markdown("""
+            <style>
+            div[role="radiogroup"] > label {
+                margin-bottom: 12px !important;
+                padding: 5px 0px !important;
+            }
+            </style>
+        """, unsafe_allow_html=True)
+        
         selected_score = st.radio(
             "이 답변에 대한 점수를 부여해주세요:",
             options=score_options,
