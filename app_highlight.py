@@ -305,6 +305,11 @@ def main():
     with col_nav3:
         btn_label = "완료 🏁" if st.session_state.current_idx == total_items - 1 else "다음 ➡️"
         if st.button(btn_label):
+            # 마지막 시나리오에서 "완료 🏁"를 누를 때 데이터를 자동으로 저장합니다.
+            if st.session_state.current_idx == total_items - 1:
+                with st.spinner("평가 데이터를 전송하는 중..."):
+                    save_all_scores_to_gsheet(st.session_state.eval_scores, total_items)
+            
             st.session_state.current_idx += 1
             st.rerun()
 
@@ -392,16 +397,7 @@ def main():
 
     with col_score2:
         st.write("") # 스타일링용 여백
-        # 마지막 시나리오에서만 최종 제출 버튼 표시
-        if current_idx == total_items - 1:
-            if st.button("💾 최종 데이터 제출", use_container_width=True):
-                with st.spinner("Google Sheet에 모든 평가 데이터를 전송하는 중..."):
-                    success = save_all_scores_to_gsheet(st.session_state.eval_scores, total_items)
-                if success:
-                    st.success("모든 평가 결과가 성공적으로 제출되었습니다! 🎉")
-                    st.balloons()
-                else:
-                    st.error("Google Sheet 제출 및 연결 실패.")
+        # 더 이상 하단에 별도의 제출 버튼이 필요하지 않습니다. (상단 완료 버튼에 통합됨)
 
 if __name__ == "__main__":
     main()
