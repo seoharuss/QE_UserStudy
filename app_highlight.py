@@ -6,7 +6,75 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
 from datetime import datetime
-from user_study_texts import INTRO_TITLE, INTRO_INFO, EVALUATION_INFO, EVALUATION_METHOD_INFO, EVALUATION_CRITERIA
+
+# === 실험용 텍스트 설정 ===
+INTRO_TITLE = "## 챗봇 답변 평가"
+
+INTRO_INFO = """
+        안녕하세요,
+        
+        저희는 **Quantum ESPRESSO (QE)** 를 활용한 **Density Functional Theory (DFT)** 시뮬레이션 과정에서 발생하는 오류를 해결하고, 관련 질문에 답해주는 **Large Language Model (LLM)** 기반 챗봇을 연구하는 박인기, 조영우, 유재각, 김지환입니다.
+
+        QE 를 사용하다 보면 다양한 문제 상황 및 에러를 마주하게 되나, 해결 방안을 손쉽게 찾기 어려운 경우가 많습니다. 이러한 문제를 해결하고자, 저희는 DFT 및 관련 전공서적, QE 메뉴얼, 그리고 소스코드를 **RAG (Retrieval-Augmented Generation)** 시스템에 활용하여, 사용자가 제시한 계산 스크립트와 오류 메시지를 분석하고 그 원인과 해결책을 근거와 함께 제시하는 멀티턴 챗봇을 개발했습니다.
+
+        본 챗봇은 단순한 문제 해결을 넘어, DFT 의 이론적 배경, 실무 활용 가이드, 그리고 이론 기반 DFT 소스 코드 설명 등 전반적인 지식을 제공할 수 있도록 설계되었습니다. 저희의 목표는 초보자부터 숙련된 사용자까지 실제 연구 현장에서 바로 활용 가능한 시스템을 구축하는 것입니다.
+
+        이번 설문은 개발된 챗봇이 연구자에게 얼마나 유용하고 적절한 답변을 제공하는지 평가하기 위한 것으로, 응답해 주시는 내용은 챗봇 성능 분석 및 정성 평가에 활용되어 논문 작성에 사용될 예정입니다.
+
+        ---
+        **연구팀 정보:**
+        * **박인기** (KAIST, inkey.park@kaist.ac.kr)
+        * **조영우** (KAIST, cyw314@kaist.ac.kr)
+        * **김지환** (KAIST, jihvvan.kim@kaist.ac.kr)
+        * **유재각 박사** (UIUC, yoojk20@illinois.edu)
+        * **주재걸 교수** (KAIST, jchoo@kaist.ac.kr)
+"""
+
+EVALUATION_INFO = """
+
+        아래는 사용자 질문에 답하기 위해 필요한 관련 외부 지식 (QE 사용 설명서, QE 소스 코드, 전공서적) 을 얼마나 정확하게 검색하고 반영했는지 평가합니다.
+
+        외부 지식은 LLM 시스템이 직접 활용할 수 있도록 데이터베이스화 되어 있습니다. 사용자 질문이 들어오면 LLM 시스템은 데이터베이스에서 필요한 외부 지식을 활용하여 답변을 생성합니다.
+
+        각 **시나리오**마다 질문 (Question) 과 외부 지식 (Context) 을 바탕으로, 챗봇의 답변 (Answer) 이 얼마나 정확하고 충실한지 평가 및 점수 부여 기준에 따라 0 점 ~ 5 점 사이로 평가해 주시면 됩니다.
+
+        평가 및 점수 부여 기준은 각 시나리오 페이지 상단에 제시되어 있습니다.
+"""
+
+EVALUATION_METHOD_INFO = """
+
+        1. 평가를 시작하기 전에, 평가 및 점수 부여 기준을 읽어보시고, 각 시나리오마다 챗봇의 답변을 평가해 주세요.
+        
+        2. "Question" 은 사용자가 챗봇에게 질문한 내용입니다.
+
+        3. "ChatBot Answer" 은 챗봇이 생성한 답변입니다.
+
+        4. "Contexts" 은 챗봇이 답변을 생성하기 위해 활용한 외부 지식입니다.
+
+        5. "ChatBot Answer" 의 각 문장 뒤에 붙어 있는 숫자와 괄호는 해당 "Contexts" 를 참조했다는 의미입니다. (예: [4] 는 Context 4 를 참조했다는 의미입니다.)
+
+        6. 평가 및 점수 부여 기준에 근거하여, 페이지 최하단의 점수를 선택해 주세요.
+"""
+
+EVALUATION_CRITERIA = """**[평가 기준]**
+1. **기술적 정확성**
+    - Quantum ESPRESSO 의 Namelist, 파라미터가 실제로 존재하고 정확하게 사용되었는가?
+2. **근거 기반 충실성**
+    - 제공된 context 범위 내에서만 답변하고 있는가?
+    - context 와 answer 사이에 논리적 괴리가 없는가?
+3. **완결성 및 의도 파악**
+    - 사용자의 질문 중 누락된 부분은 없는가?
+4. **불확실성 처리**
+    - context 에 정보가 없을 때 억지로 추측하지 않았는가?
+
+**[점수 부여 기준]**
+- **0점** : 질문과 무관하거나 답변을 완전히 거부함.
+- **1점** : 환각 (존재하지 않는 파라미터 등) 개념 오류 발생
+- **2점** : 사소한 기술적 부정확함이나 검증되지 않은 주장 포함. 질문에 일부만 답변
+- **3점** : 기술적으로는 맞지만 통찰이 부족하거나, 너무 일반적이고 장황한 답변
+- **4점** : 정확하고 유용함. 기술적 오류는 없으나 스타일이나 문구 표현이 약간 미흡함.
+- **5점** : 결점 없음. 완벽한 기술적 전문성, 근거 기반 답변
+"""
 
 # === Google Sheets 연동 설정 ===
 def save_all_scores_to_gsheet(scores_dict, total_items):
