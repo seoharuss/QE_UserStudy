@@ -347,12 +347,12 @@ def main():
     score_options = [0, 1, 2, 3, 4, 5]
     def format_score(x):
         desc = {
-            0: "0점",
-            1: "1점",
-            2: "2점",
-            3: "3점",
-            4: "4점",
-            5: "5점"
+            0: "0점: 무응답. 질문과 전혀 상관없는 답변을 하거나 답변 자체를 거부함.",
+            1: "1점: 환각 발생. 존재하지 않는 Quantum ESPRESSO 플래그를 제시하거나 물리적으로 완전히 잘못된 정보를 제공함.",
+            2: "2점: 미흡. 기술적 오류가 일부 포함됨. 그럴듯해 보이지만 검증되지 않은 정보가 섞여 있어 그대로 믿기 위험함.",
+            3: "3점: 보통. 원론적인 수준의 답변이거나 사용자 의도를 관통하는 디테일 (Nuance) 이 부족함.",
+            4: "4점: 우수함. 기술적 오류가 없으며 실무에 유용함. 다만 표현이 다소 장황하거나 스타일 면에서 약간의 아쉬움이 있음.",
+            5: "5점: 완벽함. 부족한 부분이 없는 완벽한 기술적 답변. Quantum ESPRESSO 사용자에게 즉시 적용 가능한 최적의 정보 제공."
         }
         return desc.get(x, f"{x}점")
         
@@ -368,7 +368,7 @@ def main():
             options=score_options,
             format_func=format_score,
             index=default_index,
-            horizontal=True,
+            horizontal=False,
             key=f"radio_score_{current_idx}"
         )
         # 라디오 버튼을 선택하는 즉시 session_state에 해당 시나리오 번호로 점수 기록
