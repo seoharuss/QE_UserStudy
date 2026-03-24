@@ -328,7 +328,7 @@ def main():
     
     # 질문 섹션
     st.subheader("Question")
-    st.write(item.get("question", "질문 없음"))
+    st.markdown(f'<div style="font-size: 1.15em; font-weight: 500; color: #222; background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #007bff;">{item.get("question", "질문 없음")}</div>', unsafe_allow_html=True)
     
     st.write("---")
     
