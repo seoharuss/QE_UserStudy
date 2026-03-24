@@ -374,7 +374,7 @@ def main():
         """, unsafe_allow_html=True)
         
         selected_score = st.radio(
-            "평가 및 점수 부여 기준에 따라, 이 답변에 대해 점수를 부여해주세요:",
+            "평가 및 점수 부여 기준에 따라, 챗봇 답변에 대해 점수를 부여해주세요:",
             options=score_options,
             format_func=format_score,
             index=default_index,
