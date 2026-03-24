@@ -328,7 +328,7 @@ def main():
     
     # 질문 섹션
     st.subheader("Question")
-    st.info(item.get("question", "질문 없음"))
+    st.write(item.get("question", "질문 없음"))
     
     st.write("---")
     
