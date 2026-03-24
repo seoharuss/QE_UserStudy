@@ -334,18 +334,6 @@ def main():
         st.subheader("ChatBot Answer")
         raw_answer = item.get("rag_answer", "")
         highlighted_answer = highlight_answer(raw_answer)
-        # 인용구(blockquote) 스타일을 선명하게 조정합니다.
-        st.markdown("""
-            <style>
-                blockquote {
-                    color: #111 !important;
-                    border-left-color: #ddd !important;
-                    background-color: rgba(128,128,128,0.05);
-                    padding: 5px 15px;
-                    margin: 10px 0;
-                }
-            </style>
-        """, unsafe_allow_html=True)
         # HTML <div> 내부에 빈 줄(\n\n)을 추가하여 첫 줄의 마크다운(### 등)이 정상 파싱되도록 합니다.
         st.markdown(f'<div style="font-size: 1.05em; line-height: 1.6;">\n\n{highlighted_answer}\n\n</div>', unsafe_allow_html=True)
         
