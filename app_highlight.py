@@ -6,7 +6,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
 from datetime import datetime
-from user_study_texts import INTRO_TITLE, INTRO_INFO, EVALUATION_CRITERIA
+from user_study_texts import INTRO_TITLE, INTRO_INFO, EVALUATION_INFO, EVALUATION_METHOD_INFO, EVALUATION_CRITERIA
 
 # === Google Sheets 연동 설정 ===
 def save_all_scores_to_gsheet(scores_dict, total_items):
@@ -54,7 +54,7 @@ def save_all_scores_to_gsheet(scores_dict, total_items):
         return False
 
 # === 페이지 설정 ===
-st.set_page_config(layout="wide", page_title="Context user study")
+st.set_page_config(layout="wide", page_title="User study")
 
 # === 하이라이트 색상 팔레트 ===
 # 컨텍스트 인덱스별로 매칭할 색상
@@ -192,6 +192,7 @@ def main():
     if st.session_state.current_idx == -1:
         st.markdown(INTRO_TITLE)
         st.info(INTRO_INFO)
+        st.write(EVALUATION_INFO)
         
         st.markdown("<br>", unsafe_allow_html=True)
         cols = st.columns([1, 2, 1])
@@ -239,6 +240,7 @@ def main():
     st.write("---")
     
     # === 전문가 평가 섹션 ===
+    st.warning(EVALUATION_METHOD_INFO)
     with st.expander("평가 및 점수 부여 기준", expanded=False):
         st.markdown(EVALUATION_CRITERIA)
 
