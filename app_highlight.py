@@ -225,6 +225,31 @@ def display_context(context):
 </details>"""
     st.markdown(html_block, unsafe_allow_html=True)
 
+def display_navigation(total_items, suffix="top"):
+    """
+    상단 및 하단 네비게이션 버튼 (이전 / 다음) 표시
+    """
+    col_nav1, col_nav2, col_nav3 = st.columns([2, 6, 2])
+    
+    with col_nav1:
+        if st.button("⬅️ 이전 시나리오", disabled=(st.session_state.current_idx == 0), key=f"prev_{suffix}", use_container_width=True):
+            st.session_state.current_idx -= 1
+            st.rerun()
+            
+    with col_nav2:
+        st.markdown(f"<h4 style='text-align: center; margin-top: 5px; color: #555;'>시나리오 {st.session_state.current_idx + 1} / {total_items}</h4>", unsafe_allow_html=True)
+        
+    with col_nav3:
+        btn_label = "완료 및 제출 🏁" if st.session_state.current_idx == total_items - 1 else "다음 시나리오 ➡️"
+        if st.button(btn_label, key=f"next_{suffix}", use_container_width=True):
+            # 마지막 시나리오에서 완료를 누를 때 데이터를 자동으로 저장합니다.
+            if st.session_state.current_idx == total_items - 1:
+                with st.spinner("평가 데이터를 전송하는 중..."):
+                    save_all_scores_to_gsheet(st.session_state.eval_scores, total_items)
+            
+            st.session_state.current_idx += 1
+            st.rerun()
+
 def main():
     st.title("Context user study")
     
@@ -292,26 +317,7 @@ def main():
 
     # === 2. 평가 진행 페이지 ===
     # 상단 네비게이션 버튼 (이전 / 다음)
-    col_nav1, col_nav2, col_nav3 = st.columns([1, 8, 1])
-    
-    with col_nav1:
-        if st.button("⬅️ 이전", disabled=(st.session_state.current_idx == 0)):
-            st.session_state.current_idx -= 1
-            st.rerun()
-            
-    with col_nav2:
-        st.markdown(f"<h4 style='text-align: center; margin-top: 5px; color: #555;'>시나리오 {st.session_state.current_idx + 1} / {total_items}</h4>", unsafe_allow_html=True)
-        
-    with col_nav3:
-        btn_label = "완료 🏁" if st.session_state.current_idx == total_items - 1 else "다음 ➡️"
-        if st.button(btn_label):
-            # 마지막 시나리오에서 "완료 🏁"를 누를 때 데이터를 자동으로 저장합니다.
-            if st.session_state.current_idx == total_items - 1:
-                with st.spinner("평가 데이터를 전송하는 중..."):
-                    save_all_scores_to_gsheet(st.session_state.eval_scores, total_items)
-            
-            st.session_state.current_idx += 1
-            st.rerun()
+    display_navigation(total_items, suffix="top")
 
     item = data[st.session_state.current_idx]
     
@@ -398,6 +404,10 @@ def main():
     with col_score2:
         st.write("") # 스타일링용 여백
         # 더 이상 하단에 별도의 제출 버튼이 필요하지 않습니다. (상단 완료 버튼에 통합됨)
+        
+    st.write("---")
+    # 하단 네비게이션 버튼 중복 배치
+    display_navigation(total_items, suffix="bottom")
 
 if __name__ == "__main__":
     main()
