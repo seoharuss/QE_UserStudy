@@ -8,14 +8,12 @@ from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
 
 # === 실험용 텍스트 설정 ===
-INTRO_TITLE = "## 챗봇 답변 평가"
-
 INTRO_INFO = """
         안녕하세요,
         
         저희는 **Quantum ESPRESSO (QE)** 를 활용한 **Density Functional Theory (DFT)** 시뮬레이션 과정에서 발생하는 오류를 해결하고, 관련 질문에 답해주는 **Large Language Model (LLM)** 기반 챗봇을 연구하는 박인기, 조영우, 유재각, 김지환입니다.
 
-        QE 를 사용하다 보면 다양한 문제 상황 및 에러를 마주하게 되나, 해결 방안을 손쉽게 찾기 어려운 경우가 많습니다. 이러한 문제를 해결하고자, 저희는 DFT 및 관련 전공서적, QE 메뉴얼, 그리고 소스코드를 **RAG (Retrieval-Augmented Generation)** 시스템에 활용하여, 사용자가 제시한 계산 스크립트와 오류 메시지를 분석하고 그 원인과 해결책을 근거와 함께 제시하는 멀티턴 챗봇을 개발했습니다.
+        QE 를 사용하다 보면 다양한 문제 상황 및 에러를 마주하게 되나, 해결 방안을 손쉽게 찾기 어려운 경우가 많습니다. 이러한 문제를 해결하고자, 저희는 DFT 및 관련 전공서적, QE 메뉴얼, 그리고 소스코드를 **RAG (Retrieval-Augmented Generation)** 시스템에 활용하여, 사용자가 제시한 계산 스크립트와 오류 메시지를 분석하고 그 원인과 해결책을 근거와 함께 제시하는 챗봇을 개발했습니다.
 
         본 챗봇은 단순한 문제 해결을 넘어, DFT 의 이론적 배경, 실무 활용 가이드, 그리고 이론 기반 DFT 소스 코드 설명 등 전반적인 지식을 제공할 수 있도록 설계되었습니다. 저희의 목표는 초보자부터 숙련된 사용자까지 실제 연구 현장에서 바로 활용 가능한 시스템을 구축하는 것입니다.
 
@@ -258,7 +256,6 @@ def main():
         
     # === 1. 인트로 페이지 ===
     if st.session_state.current_idx == -1:
-        st.markdown(INTRO_TITLE)
         st.info(INTRO_INFO)
         st.write(EVALUATION_INFO)
         
