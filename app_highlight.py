@@ -175,7 +175,7 @@ def display_context(context):
         short_source = content.split(":", 1)[0].strip()
         
     # 1. 문서 출처나 내용으로 보아 아예 전체가 소스코드 파일인 경우, 전체를 코드 블록으로 씌웁니다.
-    is_code_file = any(source.endswith(ext) for ext in [".f90", ".f", ".py", ".c", ".cpp", ".sh"]) or "Code Entity:" in content
+    is_code_file = any(source.endswith(ext) for ext in [".f90", ".f", ".py", ".c", ".cpp", ".sh", ".def"]) or "Code Entity:" in content
     
     if is_code_file and "```" not in content:
         lang = "fortran" if source.endswith((".f90", ".f")) else "python" if source.endswith(".py") else ""
